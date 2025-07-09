@@ -34,7 +34,7 @@
 
     // Load face-api.js models
     Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/models'),
+      faceapi.nets.tinyFaceDetector.loadFromUri('/models')
     ]).then(startVideo);
 
     function startVideo() {
