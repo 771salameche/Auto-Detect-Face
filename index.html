@@ -34,7 +34,8 @@
 
     // Load face-api.js models
     Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri('/models')
+      faceapi.nets.tinyFaceDetector.loadFromUri('/models/tiny_face_detector_model')
+        // Add weights manifest for Tiny Face Detector model
     ]).then(startVideo);
 
     function startVideo() {
