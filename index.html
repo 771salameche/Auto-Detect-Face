@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Room Selfie Verification</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 30px; }
+    video, canvas { border: 2px solid #333; margin: 10px; }
+    button { padding: 10px 20px; font-size: 16px; }
+    #status { margin-top: 15px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Exam Room Selfie Verification</h2>
+  <video id="video" width="320" height="240" autoplay muted></video>
+  <br>
+  <button id="capture">📸 Detect & Crop Face</button>
+  <br>
+  <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+  <br>
+  <button id="send" disabled>🚀 Send to Verifier</button>
+  <p id="status">Loading face detection models...</p>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('capture');
+    const sendBtn = document.getElementById('send');
+    const statusText = document.getElementById('status');
+
+    let croppedFaceData = null;
+
+    // Load face-api.js models
+    Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/models'),
+    ]).then(startVideo);
+
+    function startVideo() {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          video.srcObject = stream;
+          statusText.innerText = "📸 Camera ready. Detect a face.";
+        })
+        .catch(err => {
+          console.error("Error accessing camera: ", err);
+          statusText.innerText = "❌ Cannot access camera.";
+        });
+    }
+
+    captureBtn.addEventListener('click', async () => {
+      statusText.innerText = "🔍 Detecting face...";
+      const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions());
+      if (detections) {
+        const { x, y, width, height } = detections.box;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, x, y, width, height, 0, 0, canvas.width, canvas.height);
+        croppedFaceData = canvas.toDataURL('image/jpeg');
+        sendBtn.disabled = false;
+        statusText.innerText = "✅ Face detected and cropped. Ready to send.";
+      } else {
+        statusText.innerText = "❌ No face detected. Try again.";
+      }
+    });
+
+    sendBtn.addEventListener('click', () => {
+      if (!croppedFaceData) return;
+      statusText.innerText = "🚀 Sending selfie to verifier...";
+      fetch("https://your-n8n-domain.com/webhook/verify-identity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          selfie: croppedFaceData,
+          roomId: "Room A1",
+          professorId: "P123"
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        statusText.innerText = data.verified
+          ? `✅ Verified! Confidence: ${data.confidence}%`
+          : `❌ Verification Failed.`;
+      })
+      .catch(err => {
+        console.error("Error sending selfie: ", err);
+        statusText.innerText = "❌ Failed to send selfie.";
+      });
+    });
+  </script>
+</body>
+</html>
+<script>
+    // Ensure face-api.js is loaded
+    if (typeof faceapi === 'undefined') {
+      console.error("face-api.js not loaded. Check your script tag.");
+      statusText.innerText = "❌ Failed to load face detection models.";
+    }
+  </script>
