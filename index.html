@@ -68,7 +68,7 @@
     sendBtn.addEventListener('click', () => {
       if (!croppedFaceData) return;
       statusText.innerText = "🚀 Sending selfie to verifier...";
-      fetch("https://your-n8n-domain.com/webhook/verify-identity", {
+      fetch("https://rhino-loved-shepherd.ngrok-free.app/webhook-test/verify-identity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
